@@ -21,13 +21,25 @@ import mylogin.ip_parser as ip_parser
 
 def get_login_info(login_path, host=None, port=None, socket=None):
     """ Get the user and password from a .mylogin.cnf file """
-    host = host or 'localhost'
+    host = host or u'localhost'
     port = port or 3306
     if socket is not None:
         info_dict = ip_parser.parse_connection('{lp}:{sock}'.format(
             lp=login_path, sock=socket))
+        try:
+            del info_dict['host']
+        except KeyError:
+            pass
+        try:
+            del info_dict['port']
+        except KeyError:
+            pass
     else:
         info_dict = ip_parser.parse_connection('{lp}:{host}:{port}'.format(
             lp=login_path, host=host, port=port))
-
+        try:
+            del info_dict['unix_socket']
+        except KeyError:
+            pass
+    
     return info_dict

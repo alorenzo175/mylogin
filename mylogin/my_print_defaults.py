@@ -269,7 +269,7 @@ class MyDefaultsReader(object):
                             stderr=null_file)
         # Read --help output
         out_file.seek(0)
-        help_output = out_file.read()
+        help_output = str(out_file.read())
         out_file.close()
 
         # Check the existence of a "login-path" option
@@ -299,7 +299,9 @@ class MyDefaultsReader(object):
         # Read and parse group options values.
         out_file.seek(0)
         results = []
-        for line in out_file:
+
+        for line in out_file.readlines():
+            line = line.decode('utf-8')
             # Parse option value; ignore starting "--"
             key_value = line[2:].split("=", 1)
             if len(key_value) == 2:
