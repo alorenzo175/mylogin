@@ -305,8 +305,9 @@ def parse_connection(connection_values, my_defaults_reader=None, options=None):
             else:
                 required_options = ('user', 'host', 'port')
 
-            missing_options = [opt for opt in required_options
-                               if locals()[opt] is None]
+            local_vars = locals()
+            missing_options = [opt for opt in required_options 
+                               if local_vars[opt] is None]
 
             # If we are on unix and port is missing, user might have specified
             # a socket instead
