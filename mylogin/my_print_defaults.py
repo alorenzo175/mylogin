@@ -278,7 +278,7 @@ class MyDefaultsReader(object):
         else:
             return False
 
-    def _read_group_data(self, group):
+    def _read_group_data(self, group, use_show=True):
         """Read group options data using my_print_defaults tool.
         """
         # The path to the tool must have been previously found.
@@ -288,19 +288,24 @@ class MyDefaultsReader(object):
 
         # Group not found; use my_print_defaults to get group data.
         out_file = tempfile.TemporaryFile()
+        call_list = [self._tool_path, group]
+        if use_show:
+            call_list.append('-s')
         if self._verbosity > 0:
-            subprocess.call([self._tool_path, group], stdout=out_file)
+            subprocess.call(call_list, stdout=out_file)
         else:
             # Redirect stderr to null
             null_file = open(os.devnull, "w+b")
-            subprocess.call([self._tool_path, group], stdout=out_file,
+            subprocess.call(call_list, stdout=out_file,
                             stderr=null_file)
 
         # Read and parse group options values.
         out_file.seek(0)
         results = []
+        got_output = False
 
         for line in out_file.readlines():
+            got_output = True
             line = line.decode('utf-8')
             # Parse option value; ignore starting "--"
             key_value = line[2:].split("=", 1)
@@ -314,6 +319,8 @@ class MyDefaultsReader(object):
                 raise UtilError("Invalid option value format for "
                                 "group %s: %s" % (group, line))
         out_file.close()
+        if not got_output:
+            raise UtilError("No output from my_print_defaults")
 
         if len(results):
             self._config_data[group] = dict(results)
@@ -330,7 +337,11 @@ class MyDefaultsReader(object):
             return self._config_data[group]
         except KeyError:
             # Otherwise, get it using my_print_defaults.
-            return self._read_group_data(group)
+            try:
+                out = self._read_group_data(group, True)
+            except UtilError:
+                out = self._read_group_data(group, False)
+            return out
 
     def get_option_value(self, group, opt_name):
         """Retrieve the value associated to the given opt_name in the group.
